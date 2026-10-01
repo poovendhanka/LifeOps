@@ -37,7 +37,13 @@ jobs:
       - name: Run unit tests and assemble debug APK
         run: ./gradlew testDebugUnitTest assembleDebug --stacktrace --no-daemon
 
-      - name: Upload APK and test reports
+      - name: Verify debug APK metadata
+        run: "$ANDROID_HOME/build-tools/36.0.0/aapt dump badging app/build/outputs/apk/debug/app-debug.apk | sed -n '1,3p'"
+
+      - name: Package source archive
+        run: zip -r LifeOps-Source.zip . -x '.git/*' '.gradle/*' 'local.properties' 'build/*' 'app/build/*'
+
+      - name: Upload APK, source, and test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -45,4 +51,5 @@ jobs:
           path: |
             app/build/outputs/apk/debug/*.apk
             app/build/reports/tests/testDebugUnitTest/**
+            LifeOps-Source.zip
           if-no-files-found: warn
