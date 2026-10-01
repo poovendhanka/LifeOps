@@ -106,7 +106,7 @@ fun initialItem(kind:String)=ItemEntity(kind=kind,status=when(kind){Kind.FOLLOW-
   else items(attention.sortedWith(compareBy<ItemEntity>{it.due}.thenByDescending{it.priority}).take(4),key={it.id}){ItemRow(it,all,open,complete)}
   item{Section("Waiting for","See all"){go("Follow-ups")}}
   if(waiting.isEmpty())item{LifeOpsCard {Text("Nothing waiting",fontSize=17.sp);Text("You’re currently caught up.",color=Muted,fontSize=13.sp)}}
-  else items(waiting.take(3),key={"wait"+it.id}){item->LifeOpsCard(onClick={open(item)}){Row(horizontalArrangement=Arrangement.spacedBy(12.dp),verticalAlignment=Alignment.CenterVertically){Icon(Icons.Rounded.HourglassTop,null,tint=Muted,modifier=Modifier.size(21.dp));Column(Modifier.weight(1f)){Text(item.title,fontSize=16.sp);Text(waitingLabel(item.waitingSince?:item.createdAt,now),color=Muted,fontSize=12.sp)};Icon(Icons.Rounded.ChevronRight,null,tint=Muted)};if(item.nextAction.isNotBlank())Text("Next · ${item.nextAction}",color=Silver,fontSize=13.sp)}}}
+  else items(waiting.take(3),key={"wait"+it.id}){item->LifeOpsCard(onClick={open(item)}){Row(horizontalArrangement=Arrangement.spacedBy(12.dp),verticalAlignment=Alignment.CenterVertically){Icon(Icons.Rounded.HourglassTop,null,tint=Muted,modifier=Modifier.size(21.dp));Column(Modifier.weight(1f)){Text(item.title,fontSize=16.sp);Text(waitingLabel(item.waitingSince?:item.createdAt,now),color=Muted,fontSize=12.sp)};Icon(Icons.Rounded.ChevronRight,null,tint=Muted)};if(item.nextAction.isNotBlank())Text("Next · ${item.nextAction}",color=Silver,fontSize=13.sp)}}
   item{Section("In motion","Projects"){go("Projects")}}
   if(projects.isEmpty())item{EmptyState("Start something meaningful","Keep the next step close, and the bigger picture in view.","New project"){create(Kind.PROJECT)}}
   else items(projects.take(3),key={"project"+it.id}){ItemRow(it,all,open,complete)}
@@ -114,6 +114,7 @@ fun initialItem(kind:String)=ItemEntity(kind=kind,status=when(kind){Kind.FOLLOW-
   item{Section("Quick capture")}
   item{Column(verticalArrangement=Arrangement.spacedBy(8.dp)){Kind.all.chunked(3).forEach{row->Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){row.forEach{kind->Surface(Modifier.weight(1f).clip(RoundedCornerShape(18.dp)).clickable{create(kind)},color=Color(0xFF111114),shape=RoundedCornerShape(18.dp),border=BorderStroke(1.dp,Edge)){Column(Modifier.padding(vertical=16.dp),horizontalAlignment=Alignment.CenterHorizontally){Icon(kindIcon(kind),null,Modifier.size(23.dp),tint=Silver);Text(kind,fontSize=11.sp,color=Muted,modifier=Modifier.padding(top=8.dp))}}}}}}
  }
+}
 }
 
 @Composable fun ItemRow(item:ItemEntity,all:List<ItemEntity>,open:(ItemEntity)->Unit,complete:(ItemEntity)->Unit,selected:Boolean=false,onLong:()->Unit={}) {
