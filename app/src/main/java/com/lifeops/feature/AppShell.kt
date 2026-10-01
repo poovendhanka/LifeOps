@@ -137,4 +137,42 @@ fun initialItem(kind:String)=ItemEntity(kind=kind,status=when(kind){Kind.FOLLOW-
  }
 }
 
-@Composable fun MoreScreen(go:(String)->Unit) {LazyColumn(contentPadding=PaddingValues(22.dp,8.dp,22.dp,100.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {item{PageTitle("Your workspace","Everything has its place.")};items(listOf("Follow-ups" to Icons.Rounded.HourglassTop,"Notes" to Icons.Rounded.EditNote,"Expenses" to Icons.Rounded.AccountBalanceWallet,"Documents" to Icons.Rounded.Description,"Calendar" to Icons.Rounded.CalendarMonth,"Search" to Icons.Rounded.Search,"Settings" to Icons.Rounded.Settings)){(label,icon)->LifeOpsCard(onClick={go(label)}){Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(16.dp)){Icon(icon,null,tint=Silver);Text(label,Modifier.weight(1f),fontSize=17.sp);Icon(Icons.Rounded.ChevronRight,null,tint=Muted)}}};item{Text("LIFEOPS  /  PRIVATE BY DESIGN",fontSize=10.sp,color=Muted,letterSpacing=2.sp,modifier=Modifier.padding(top=24.dp))}}}
+@Composable
+fun MoreScreen(go: (String) -> Unit) {
+    val entries = listOf(
+        "Follow-ups" to Icons.Rounded.HourglassTop,
+        "Notes" to Icons.Rounded.EditNote,
+        "Expenses" to Icons.Rounded.AccountBalanceWallet,
+        "Documents" to Icons.Rounded.Description,
+        "Calendar" to Icons.Rounded.CalendarMonth,
+        "Search" to Icons.Rounded.Search,
+        "Settings" to Icons.Rounded.Settings
+    )
+    LazyColumn(
+        contentPadding = PaddingValues(22.dp, 8.dp, 22.dp, 100.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        item { PageTitle("Your workspace", "Everything has its place.") }
+        items(entries, key = { it.first }) { (label, icon) ->
+            LifeOpsCard(onClick = { go(label) }) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Icon(icon, contentDescription = null, tint = Silver)
+                    Text(label, Modifier.weight(1f), fontSize = 17.sp)
+                    Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = Muted)
+                }
+            }
+        }
+        item {
+            Text(
+                "LIFEOPS  /  PRIVATE BY DESIGN",
+                fontSize = 10.sp,
+                color = Muted,
+                letterSpacing = 2.sp,
+                modifier = Modifier.padding(top = 24.dp)
+            )
+        }
+    }
+}
