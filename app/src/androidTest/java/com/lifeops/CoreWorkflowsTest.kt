@@ -2,6 +2,8 @@ package com.lifeops
 
 import android.content.Intent
 import androidx.compose.ui.test.*
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -38,12 +40,21 @@ class CoreWorkflowsTest : WorkspaceTest() {
     }
 
     private fun editorButton(text: String) {
+        // IME insets animate outside Compose's test clock. Close the keyboard
+        // before positioning/tapping controls near the bottom of the sheet.
+        closeSoftKeyboard()
+        ui.waitForIdle()
         ui.onNodeWithText(text).performScrollTo().performClick()
     }
 
     private fun save(kind: String, editing: Boolean = false) {
         editorButton(if (editing) "Save changes" else "Add ${kind.lowercase()}")
-        ui.waitUntil(10_000) { ui.onAllNodesWithTag("editor").fetchSemanticsNodes().isEmpty() }
+        try {
+            ui.waitUntil(10_000) { ui.onAllNodesWithTag("editor").fetchSemanticsNodes().isEmpty() }
+        } catch (failure: Throwable) {
+            dumpUi()
+            throw failure
+        }
     }
 
     private fun awaitItem(predicate: (ItemEntity) -> Boolean): ItemEntity {
@@ -63,8 +74,25 @@ class CoreWorkflowsTest : WorkspaceTest() {
     }
 
     private fun scrollTo(container: String, matcher: SemanticsMatcher): SemanticsNodeInteraction {
-        ui.onNodeWithTag(container).performScrollToNode(matcher)
-        return ui.onNode(matcher)
+        try {
+            val list = ui.onNodeWithTag(container)
+            list.performScrollToNode(matcher)
+            val target = ui.onNode(matcher)
+            // A merely visible control can still sit under the capture FAB.
+            // Position it in the upper viewport before sending a real tap.
+            val offset = target.fetchSemanticsNode().boundsInRoot.top -
+                list.fetchSemanticsNode().boundsInRoot.top - 80f
+            if (offset > 0f) list.performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, offset) }
+            return ui.onNode(matcher).assertIsDisplayed()
+        } catch (failure: Throwable) {
+            dumpUi()
+            throw failure
+        }
+    }
+
+    private fun dumpUi() {
+        val roots = ui.onAllNodes(isRoot(), useUnmergedTree = true)
+        roots.fetchSemanticsNodes().indices.forEach { roots[it].printToLog("LifeOpsTest") }
     }
 
     private fun detailText(text: String) = scrollTo("detail", hasText(text))
@@ -253,7 +281,10 @@ class CoreWorkflowsTest : WorkspaceTest() {
         assertTrue(runBlocking { dao.observe().first().isEmpty() })
         navigate("More")
         scrollTo("more", hasText("Settings")).performClick()
-        scrollTo("settings", hasTestTag("archive:toggle")).performClick()
+        scrollTo("settings", hasTestTag("archive:toggle"))
+        ui.waitUntil(10_000) { ui.onAllNodesWithText("Archive · 1").fetchSemanticsNodes().isNotEmpty() }
+        ui.onNodeWithTag("archive:toggle").performClick()
+        ui.onNodeWithTag("archive:toggle").assertTextContains("Hide")
         scrollTo("settings", hasText(original.title)).assertIsDisplayed()
         scrollTo("settings", hasTestTag("archive:restore:${original.id}")).performClick()
         val restored = awaitItem { it.id == original.id && !it.deleted }
