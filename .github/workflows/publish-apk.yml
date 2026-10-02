@@ -23,6 +23,7 @@ jobs:
       GH_REPO: ${{ github.repository }}
       ARTIFACT_ID: '11181770185'
       SOURCE_SHA: afa93a7eed712b5585a10bf0bab374dfdf36908e
+      PUBLICATION_SHA: ${{ github.sha }}
       RELEASE_TAG: android16-afa93a7
     steps:
       - name: Verify build provenance
@@ -58,11 +59,12 @@ jobs:
           Targets Android 16 (API 36); supports Android 10 and newer.
           The original GitHub Actions build and all 8 unit tests passed.
           The APK is published unchanged after verifying both ZIP and APK SHA-256 checksums.
+          The release tag records the publishing workflow commit; the APK source commit is listed above.
           Download LifeOps-Android16.apk directly and open it on your phone to install.
           Allow installation from your browser when Android prompts you.
           This is a debug build, not a Play Store release. Device and OEM behavior has not been verified by this publishing workflow.
           NOTES
           if ! gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" --target "$SOURCE_SHA" --title "LifeOps 1.0.0 (Android 16 debug APK)" --notes-file release-notes.md --prerelease
+            gh release create "$RELEASE_TAG" --target "$PUBLICATION_SHA" --title "LifeOps 1.0.0 (Android 16 debug APK)" --notes-file release-notes.md --prerelease
           fi
           gh release upload "$RELEASE_TAG" LifeOps-Android16.apk LifeOps-Android16.apk.sha256 --clobber
