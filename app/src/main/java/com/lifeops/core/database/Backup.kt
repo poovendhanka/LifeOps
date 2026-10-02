@@ -5,6 +5,7 @@ import androidx.room.withTransaction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.*
+import java.io.ByteArrayOutputStream
 import java.util.zip.*
 
 object Backup {
@@ -15,7 +16,13 @@ object Backup {
   ZipOutputStream(requireNotNull(c.contentResolver.openOutputStream(uri,"wt"))).use{it.putNextEntry(ZipEntry("lifeops.json"));it.write(bytes);it.closeEntry()}
  }
  suspend fun import(c:Context,uri:Uri):Int=withContext(Dispatchers.IO){
-  val text=ZipInputStream(requireNotNull(c.contentResolver.openInputStream(uri))).use{zip->val entry=zip.nextEntry;require(entry?.name=="lifeops.json"){"Not a LifeOps backup"};val bytes=zip.readNBytes(MAX_BYTES+1);require(bytes.size<=MAX_BYTES){"Backup exceeds 20 MB"};bytes.toString(Charsets.UTF_8)}
+  val text=ZipInputStream(requireNotNull(c.contentResolver.openInputStream(uri))).use{zip->
+   val entry=zip.nextEntry;require(entry?.name=="lifeops.json"){"Not a LifeOps backup"}
+   // InputStream.readNBytes requires API 33; retain bounded decompression on API 29+.
+   val bytes=ByteArrayOutputStream();val buffer=ByteArray(8192)
+   while(true){val count=zip.read(buffer);if(count<0)break;require(bytes.size()+count<=MAX_BYTES){"Backup exceeds 20 MB"};bytes.write(buffer,0,count)}
+   bytes.toString(Charsets.UTF_8.name())
+  }
   val root=JSONObject(text);require(root.optString("format")=="LifeOps"&&root.getInt("version")==1){"Unsupported backup format"}
   val array=root.getJSONArray("items");require(array.length()<=50000){"Too many items"}
   val records=(0 until array.length()).map{ItemCodec.decode(array.getJSONObject(it))}
