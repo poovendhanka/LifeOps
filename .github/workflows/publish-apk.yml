@@ -1,0 +1,68 @@
+name: Publish verified Android APK
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-apk.yml']
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: publish-lifeops-android16-afa93a7
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      ARTIFACT_ID: '11181770185'
+      SOURCE_SHA: afa93a7eed712b5585a10bf0bab374dfdf36908e
+      RELEASE_TAG: android16-afa93a7
+    steps:
+      - name: Verify build provenance
+        run: |
+          gh api "repos/$GH_REPO/actions/artifacts/$ARTIFACT_ID" > artifact.json
+          python3 - <<'PY'
+          import json, os
+          artifact = json.load(open("artifact.json"))
+          assert not artifact["expired"], "The build artifact has expired"
+          assert artifact["workflow_run"]["head_sha"] == os.environ["SOURCE_SHA"], "Source commit mismatch"
+          assert artifact["digest"] == "sha256:cc6bc9446eb22be66474215401db452ea98253ec614d1827f5eb09bd5872c311", "Artifact digest mismatch"
+          PY
+          gh api "repos/$GH_REPO/actions/runs/36899850395" > run.json
+          python3 - <<'PY'
+          import json, os
+          run = json.load(open("run.json"))
+          assert run["head_sha"] == os.environ["SOURCE_SHA"]
+          assert run["status"] == "completed" and run["conclusion"] == "success", "Build did not succeed"
+          PY
+
+      - name: Download and verify the existing signed APK
+        run: |
+          gh api "repos/$GH_REPO/actions/artifacts/$ARTIFACT_ID/zip" > build.zip
+          echo 'cc6bc9446eb22be66474215401db452ea98253ec614d1827f5eb09bd5872c311  build.zip' | sha256sum --check
+          unzip -p build.zip app/build/outputs/apk/debug/app-debug.apk > LifeOps-Android16.apk
+          echo '89d814fb043552a80e49ab0b4285b9efbf34248188f0099af1191a5bbc0f6414  LifeOps-Android16.apk' | sha256sum --check
+          sha256sum LifeOps-Android16.apk > LifeOps-Android16.apk.sha256
+
+      - name: Publish a permanent direct APK download
+        run: |
+          cat > release-notes.md <<'NOTES'
+          Installable, signed debug APK from commit afa93a7eed712b5585a10bf0bab374dfdf36908e.
+          Targets Android 16 (API 36); supports Android 10 and newer.
+          The original GitHub Actions build and all 8 unit tests passed.
+          The APK is published unchanged after verifying both ZIP and APK SHA-256 checksums.
+          Download LifeOps-Android16.apk directly and open it on your phone to install.
+          Allow installation from your browser when Android prompts you.
+          This is a debug build, not a Play Store release. Device and OEM behavior has not been verified by this publishing workflow.
+          NOTES
+          if ! gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --target "$SOURCE_SHA" --title "LifeOps 1.0.0 (Android 16 debug APK)" --notes-file release-notes.md --prerelease
+          fi
+          gh release upload "$RELEASE_TAG" LifeOps-Android16.apk LifeOps-Android16.apk.sha256 --clobber
