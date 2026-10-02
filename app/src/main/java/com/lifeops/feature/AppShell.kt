@@ -151,6 +151,7 @@ fun MoreScreen(go: (String) -> Unit) {
         "Settings" to Icons.Rounded.Settings
     )
     LazyColumn(
+        modifier = Modifier.testTag("more"),
         contentPadding = PaddingValues(22.dp, 8.dp, 22.dp, 100.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {

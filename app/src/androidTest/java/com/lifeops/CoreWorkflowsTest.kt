@@ -252,7 +252,7 @@ class CoreWorkflowsTest : WorkspaceTest() {
         ui.waitUntil(10_000) { ui.onAllNodesWithText(original.title).fetchSemanticsNodes().isEmpty() }
         assertTrue(runBlocking { dao.observe().first().isEmpty() })
         navigate("More")
-        ui.onNodeWithText("Settings").performClick()
+        scrollTo("more", hasText("Settings")).performClick()
         scrollTo("settings", hasTestTag("archive:toggle")).performClick()
         scrollTo("settings", hasText(original.title)).assertIsDisplayed()
         scrollTo("settings", hasTestTag("archive:restore:${original.id}")).performClick()
