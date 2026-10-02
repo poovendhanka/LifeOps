@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,6 +54,7 @@ fun SettingsScreen(vm: LifeViewModel) {
     val import = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { importUri = it }
 
     LazyColumn(
+        modifier = Modifier.testTag("settings"),
         contentPadding = PaddingValues(22.dp, 8.dp, 22.dp, 100.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -128,7 +130,7 @@ fun SettingsScreen(vm: LifeViewModel) {
             LifeOpsCard {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text("Archive · ${archived.size}")
-                    TextButton(onClick = { showArchive = !showArchive }) { Text(if (showArchive) "Hide" else "Open") }
+                    TextButton(modifier = Modifier.testTag("archive:toggle"), onClick = { showArchive = !showArchive }) { Text(if (showArchive) "Hide" else "Open") }
                 }
                 Text("Archived items are retained until restored. No permanent deletion is performed.", color = Muted, fontSize = 12.sp)
             }
@@ -138,7 +140,7 @@ fun SettingsScreen(vm: LifeViewModel) {
                 LifeOpsCard {
                     Text(item.title.ifBlank { "Untitled note" })
                     Text(item.kind, color = Muted, fontSize = 12.sp)
-                    TextButton(onClick = { vm.restore(item) }) { Text("Restore") }
+                    TextButton(modifier = Modifier.testTag("archive:restore:${item.id}"), onClick = { vm.restore(item) }) { Text("Restore") }
                 }
             }
         }

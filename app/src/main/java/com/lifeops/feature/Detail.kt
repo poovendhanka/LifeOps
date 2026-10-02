@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -29,7 +30,7 @@ import com.lifeops.core.util.*
  val context=LocalContext.current
  val linked=all.filter{it.projectId==id};val tasks=linked.filter{it.kind==Kind.TASK}
  val progress=if(tasks.isNotEmpty())100*tasks.count{it.status=="Completed"}/tasks.size else item.progress
- LazyColumn(contentPadding=PaddingValues(22.dp,8.dp,22.dp,40.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
+ LazyColumn(Modifier.testTag("detail"),contentPadding=PaddingValues(22.dp,8.dp,22.dp,40.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
   item{Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){IconButton(onClick=back){Icon(Icons.Rounded.ArrowBack,"Back")};Row {IconButton(onClick={vm.save(item.copy(pinned=!item.pinned))}){Icon(if(item.pinned)Icons.Rounded.PushPin else Icons.Rounded.PushPin,if(item.pinned)"Unpin" else "Pin",tint=if(item.pinned)Silver else Muted)};IconButton(onClick={edit(item)}){Icon(Icons.Rounded.Edit,"Edit item")};IconButton(onClick={confirm=true}){Icon(Icons.Rounded.Archive,"Archive item")}}}}
   item{Eyebrow(item.kind);Text(item.title.ifBlank{"Untitled note"},fontSize=30.sp,fontWeight=FontWeight.Medium,modifier=Modifier.padding(top=10.dp));Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)){AssistChip(onClick={changeStatus=true},label={Text(item.status)},trailingIcon={Icon(Icons.Rounded.ExpandMore,null,Modifier.size(16.dp))});Text(listOf("Low","Normal","High","Critical")[item.priority]+" priority",fontSize=12.sp,color=Muted)}}
   if(item.kind in listOf(Kind.TASK,Kind.FOLLOW,Kind.PROJECT))item{LifeOpsCard(onClick={edit(item)}){Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Eyebrow("NEXT ACTION");Icon(Icons.Rounded.NorthEast,null,Modifier.size(18.dp),tint=Muted)};Text(item.nextAction.ifBlank{"Give this a clear next step."},fontSize=22.sp);if(item.due!=null)Text(dateLabel(item.due,true),color=Muted,fontSize=13.sp)}}

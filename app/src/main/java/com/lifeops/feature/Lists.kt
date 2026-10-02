@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lifeops.core.database.*
@@ -25,7 +26,7 @@ import com.lifeops.core.util.*
  val choices=if(kind==Kind.TASK)listOf("Today","Upcoming","Overdue","All","Completed") else if(kind==Kind.FOLLOW)listOf("Active","Waiting","Overdue","Resolved","All") else if(kind==Kind.PROJECT)listOf("Active","Completed","All") else listOf("All","Pinned")
  val actualFilter=if(filter in choices)filter else "All"
  val records=all.filter {it.kind==kind&&("${it.title} ${it.body} ${it.tags} ${it.nextAction} ${it.contact}").contains(query,true)&&(priority<0||it.priority==priority)&&when(actualFilter){"Today"->!it.finished&&it.due!=null&&it.due<dayEnd();"Upcoming"->!it.finished&&it.due!=null&&it.due>=dayEnd();"Overdue"->!it.finished&&it.due!=null&&it.due<dayStart();"Completed"->it.finished;"Resolved"->it.finished;"Waiting"->it.status=="Waiting";"Active"->!it.finished;"Pinned"->it.pinned;else->true}}.let{list->when(sort){"Priority"->list.sortedByDescending{it.priority};"Recently updated"->list.sortedByDescending{it.updatedAt};"Title"->list.sortedBy{it.title.lowercase()};else->list.sortedWith(compareByDescending<ItemEntity>{it.pinned}.thenBy{it.finished}.thenBy{it.due?:Long.MAX_VALUE})}}
- LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(22.dp,8.dp,22.dp,100.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
+ LazyColumn(Modifier.testTag("list:$kind").fillMaxSize(),contentPadding=PaddingValues(22.dp,8.dp,22.dp,100.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
   item{PageTitle(title,if(kind==Kind.FOLLOW)"Keep the next conversation in sight." else "${records.size} ${if(records.size==1)"item" else "items"}"){IconButton(onClick={showFilters=true}){Icon(Icons.Rounded.Tune,"Filter and sort")}}}
   item{OutlinedTextField(query,{query=it},placeholder={Text("Search ${title.lowercase()}")},leadingIcon={Icon(Icons.Rounded.Search,null)},singleLine=true,shape=RoundedCornerShape(20.dp),modifier=Modifier.fillMaxWidth())}
   item{Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(8.dp)){choices.forEach{FilterChip(selected=actualFilter==it,onClick={filter=it},label={Text(it)})}}}
@@ -47,9 +48,9 @@ import com.lifeops.core.util.*
 @Composable fun SearchScreen(all:List<ItemEntity>,open:(ItemEntity)->Unit) {
  var query by rememberSaveable{mutableStateOf("")}
  val results=remember(all,query){if(query.isBlank())emptyList()else all.filter {("${it.title} ${it.body} ${it.nextAction} ${it.contact} ${it.category} ${it.tags} ${it.lastAction}").contains(query.trim(),true)}}
- LazyColumn(contentPadding=PaddingValues(22.dp,8.dp,22.dp,100.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
+ LazyColumn(Modifier.testTag("search"),contentPadding=PaddingValues(22.dp,8.dp,22.dp,100.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
   item{PageTitle("Find your things","One search. Your whole workspace.")}
-  item{OutlinedTextField(query,{query=it},singleLine=true,placeholder={Text("Search everything")},leadingIcon={Icon(Icons.Rounded.Search,null)},modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(22.dp))}
+  item{OutlinedTextField(query,{query=it},singleLine=true,placeholder={Text("Search everything")},leadingIcon={Icon(Icons.Rounded.Search,null)},modifier=Modifier.testTag("search:query").fillMaxWidth(),shape=RoundedCornerShape(22.dp))}
   if(query.isBlank())item{LifeOpsCard {Text("A thought, a project, a person…",fontSize=19.sp);Text("Search titles, notes, next actions and tags.",color=Muted)}}
   else if(results.isEmpty())item{Text("No results for “$query”",color=Muted)}
   results.groupBy{it.kind}.forEach{(kind,records)->item{Section("$kind · ${records.size}")};items(records,key={it.id}){ItemRow(it,all,open,{open(it)})}}

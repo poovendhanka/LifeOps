@@ -31,13 +31,17 @@ Requirements: JDK 17, Android SDK 36, and an Android 10 (API 29) or newer
 device/emulator.
 
 ```bash
-./gradlew testDebugUnitTest assembleDebug
+./gradlew testDebugUnitTest assembleDebug assembleDebugAndroidTest
+./gradlew connectedDebugAndroidTest  # disposable API 29+ emulator/device
 ```
 
 The debug APK is written to
 `app/build/outputs/apk/debug/app-debug.apk`. The GitHub Actions workflow runs
 the unit tests, assembles the APK, verifies its metadata, and publishes the APK
-and a clean `LifeOps-Source.zip` artifact.
+and a clean `LifeOps-Source.zip` artifact. It also runs isolated Compose/Room
+instrumentation on API 29 and API 36 for pushes and pull requests to `main`.
+See [TESTING.md](TESTING.md) for coverage, reports, and remaining manual QA.
+Instrumentation clears app data; use a disposable test installation.
 
 ## Major features
 

@@ -20,6 +20,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -30,8 +31,8 @@ import com.lifeops.core.util.*
 import java.time.*
 
 fun statuses(kind:String)=when(kind){Kind.TASK->listOf("Inbox","Planned","In Progress","Waiting","Completed","Cancelled");Kind.FOLLOW->listOf("Action Required","Waiting","Resolved","Closed");Kind.PROJECT->listOf("Planning","Active","Paused","Waiting","Completed","Archived");else->listOf("Active")}
-@Composable fun SelectField(label:String,value:String,options:List<String>,onChange:(String)->Unit){var menu by remember{mutableStateOf(false)};Column {Text(label,color=Muted,fontSize=12.sp);Box{OutlinedButton(onClick={menu=true},modifier=Modifier.fillMaxWidth().heightIn(min=50.dp),shape=RoundedCornerShape(17.dp),border=BorderStroke(1.dp,Edge)){Text(value,Modifier.weight(1f));Icon(Icons.Rounded.ExpandMore,null)};DropdownMenu(expanded=menu,onDismissRequest={menu=false}){options.forEach{DropdownMenuItem(text={Text(it)},onClick={onChange(it);menu=false})}}}}}
-@Composable fun EditText(label:String,value:String,onChange:(String)->Unit,lines:Int=1,numeric:Boolean=false) {OutlinedTextField(value,onChange,label={Text(label)},minLines=lines,maxLines=if(lines==1)1 else 10,singleLine=lines==1,shape=RoundedCornerShape(18.dp),modifier=Modifier.fillMaxWidth(),keyboardOptions=KeyboardOptions(keyboardType=if(numeric)KeyboardType.Decimal else KeyboardType.Text))}
+@Composable fun SelectField(label:String,value:String,options:List<String>,onChange:(String)->Unit){var menu by remember{mutableStateOf(false)};Column {Text(label,color=Muted,fontSize=12.sp);Box{OutlinedButton(onClick={menu=true},modifier=Modifier.testTag("select:$label").fillMaxWidth().heightIn(min=50.dp),shape=RoundedCornerShape(17.dp),border=BorderStroke(1.dp,Edge)){Text(value,Modifier.weight(1f));Icon(Icons.Rounded.ExpandMore,null)};DropdownMenu(expanded=menu,onDismissRequest={menu=false}){options.forEach{DropdownMenuItem(text={Text(it)},onClick={onChange(it);menu=false})}}}}}
+@Composable fun EditText(label:String,value:String,onChange:(String)->Unit,lines:Int=1,numeric:Boolean=false) {OutlinedTextField(value,onChange,label={Text(label)},minLines=lines,maxLines=if(lines==1)1 else 10,singleLine=lines==1,shape=RoundedCornerShape(18.dp),modifier=Modifier.testTag("field:$label").fillMaxWidth(),keyboardOptions=KeyboardOptions(keyboardType=if(numeric)KeyboardType.Decimal else KeyboardType.Text))}
 @Composable fun DateControl(label:String,value:Long?,onChange:(Long?)->Unit,withTime:Boolean=true,defaultHour:Int=9) {
  val c=LocalContext.current
  fun select(){val z=value?.let{Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault())}?:ZonedDateTime.now().withHour(defaultHour).withMinute(0);DatePickerDialog(c,{_,year,month,day->val date=LocalDate.of(year,month+1,day);if(withTime)TimePickerDialog(c,{_,hour,minute->onChange(date.atTime(hour,minute).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())},z.hour,z.minute,false).show()else onChange(date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli())},z.year,z.monthValue-1,z.dayOfMonth).show()}
@@ -57,7 +58,7 @@ fun statuses(kind:String)=when(kind){Kind.TASK->listOf("Inbox","Planned","In Pro
  fun draft()=initial.copy(title=title.trim(),body=body.trim(),nextAction=next.trim(),status=status,priority=priority,due=due,reminderAt=reminder,recurrence=recurrence,projectId=project,contact=contact.trim(),category=category,lastAction=lastAction.trim(),waitingSince=since,startAt=start,progress=progress.toInt(),tags=tags.trim(),amountMinor=parseMoney(amount)?:0,payment=payment,uri=uri,pinned=pinned)
  fun dismiss(){if(draft()!=initial)discard=true else onDismiss()}
  ModalBottomSheet(onDismissRequest={dismiss()},sheetState=rememberModalBottomSheetState(skipPartiallyExpanded=true),containerColor=MaterialTheme.colorScheme.surface,shape=RoundedCornerShape(topStart=30.dp,topEnd=30.dp)) {
-  Column(Modifier.fillMaxWidth().imePadding().padding(horizontal=22.dp).verticalScroll(rememberScrollState()).padding(bottom=24.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
+  Column(Modifier.testTag("editor").fillMaxWidth().imePadding().padding(horizontal=22.dp).verticalScroll(rememberScrollState()).padding(bottom=24.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
    Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween){Text(if(existing)"Edit ${kind.lowercase()}" else "New ${kind.lowercase()}",fontSize=25.sp);IconButton(onClick={dismiss()}){Icon(Icons.Rounded.Close,"Close editor")}}
    EditText(if(kind==Kind.NOTE)"Title (optional)" else if(kind==Kind.EXPENSE)"Description" else "Title",title,{title=it;error=null})
    if(kind==Kind.EXPENSE){EditText("Amount (₹)",amount,{amount=it;error=null},numeric=true);SelectField("Category",category,listOf("Food","Travel","Bills","Shopping","Health","Family","Subscriptions","Other")){category=it};SelectField("Payment method",payment,listOf("UPI","Cash","Credit card","Debit card","Bank transfer","Other")){payment=it};DateControl("Expense date",due,{due=it},false)}

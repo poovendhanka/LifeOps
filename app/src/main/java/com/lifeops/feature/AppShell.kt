@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -54,7 +55,7 @@ fun initialItem(kind:String)=ItemEntity(kind=kind,status=when(kind){Kind.FOLLOW-
   bottomBar={Surface(color=Black){Row(Modifier.navigationBarsPadding().padding(horizontal=12.dp,vertical=8.dp).fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){tabs.forEach{(label,icon)->
    val selected=route==label
    val bg by animateColorAsState(if(selected)Color(0xFF25252B)else Color.Transparent,label="nav")
-   Column(Modifier.weight(1f).clip(RoundedCornerShape(20.dp)).background(bg).clickable {nav.navigate(label){popUpTo(nav.graph.startDestinationId){saveState=true};launchSingleTop=true;restoreState=true}}.padding(vertical=10.dp),horizontalAlignment=Alignment.CenterHorizontally){Icon(icon,label,tint=if(selected)Silver else Muted,modifier=Modifier.size(23.dp));Spacer(Modifier.height(5.dp));Text(label,fontSize=10.sp,color=if(selected)Silver else Muted)}
+   Column(Modifier.testTag("nav:$label").weight(1f).clip(RoundedCornerShape(20.dp)).background(bg).clickable {nav.navigate(label){popUpTo(nav.graph.startDestinationId){saveState=true};launchSingleTop=true;restoreState=true}}.padding(vertical=10.dp),horizontalAlignment=Alignment.CenterHorizontally){Icon(icon,label,tint=if(selected)Silver else Muted,modifier=Modifier.size(23.dp));Spacer(Modifier.height(5.dp));Text(label,fontSize=10.sp,color=if(selected)Silver else Muted)}
   }}}},
   floatingActionButton={if(!route.startsWith("detail")) FloatingActionButton(onClick={capture=true},shape=CircleShape,containerColor=Silver,contentColor=Black,modifier=Modifier.size(58.dp)){Icon(Icons.Rounded.Add,"Quick capture",Modifier.size(28.dp))}}
  ) {padding->
@@ -75,7 +76,7 @@ fun initialItem(kind:String)=ItemEntity(kind=kind,status=when(kind){Kind.FOLLOW-
   }
  }
  if(capture)ModalBottomSheet(onDismissRequest={capture=false},containerColor=Color(0xFF111114),shape=RoundedCornerShape(topStart=30.dp,topEnd=30.dp)) {
-  Column(Modifier.padding(horizontal=24.dp).padding(bottom=28.dp)){Eyebrow("GET IT OUT OF YOUR HEAD");Text("What’s on your mind?",fontSize=25.sp,modifier=Modifier.padding(vertical=12.dp));Kind.all.forEach{kind->ListItem(headlineContent={Text(if(kind==Kind.DOCUMENT)"Add document" else "New ${kind.lowercase()}")},leadingContent={Icon(kindIcon(kind),null)},trailingContent={Icon(Icons.Rounded.ArrowOutward,null)},colors=ListItemDefaults.colors(containerColor=Color.Transparent),modifier=Modifier.clip(RoundedCornerShape(18.dp)).clickable{new(kind)})}}
+  Column(Modifier.padding(horizontal=24.dp).padding(bottom=28.dp)){Eyebrow("GET IT OUT OF YOUR HEAD");Text("What’s on your mind?",fontSize=25.sp,modifier=Modifier.padding(vertical=12.dp));Kind.all.forEach{kind->ListItem(headlineContent={Text(if(kind==Kind.DOCUMENT)"Add document" else "New ${kind.lowercase()}")},leadingContent={Icon(kindIcon(kind),null)},trailingContent={Icon(Icons.Rounded.ArrowOutward,null)},colors=ListItemDefaults.colors(containerColor=Color.Transparent),modifier=Modifier.testTag("capture:$kind").clip(RoundedCornerShape(18.dp)).clickable{new(kind)})}}
  }
  edit?.let{item->ItemEditor(item,all,vm,onDismiss={edit=null}){vm.save(it){edit=null}}}
 }
